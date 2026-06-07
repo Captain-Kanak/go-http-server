@@ -1,0 +1,187 @@
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"strconv"
+)
+
+type Response struct {
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+	Data    any    `json:"data"`
+}
+
+type User struct {
+	Id    int    `json:"id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
+	Age   int    `json:"age"`
+}
+
+var users = []User{
+	{
+		Id:    1,
+		Name:  "John Doe",
+		Email: "jD0Hw@example.com",
+		Age:   30,
+	},
+	{
+		Id:    2,
+		Name:  "Jane Doe",
+		Email: "2b4e9@example.com",
+		Age:   25,
+	},
+	{
+		Id:    3,
+		Name:  "Bob Smith",
+		Email: "r9B2o@example.com",
+		Age:   35,
+	},
+}
+
+func main() {
+	routesHandler()
+
+}
+
+func routesHandler() {
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("GET /", rootHandler)
+	mux.HandleFunc("GET /health", healthHandler)
+
+	mux.HandleFunc("POST /create-user", createUserHandler)
+	mux.HandleFunc("GET /users", getUsersHandler)
+	mux.HandleFunc("GET /users/{id}", getUserById)
+
+	fmt.Println("Server is running...")
+	err := http.ListenAndServe(":5000", mux)
+
+	if err != nil {
+		fmt.Println("Server error:", err)
+	}
+}
+
+func rootHandler(w http.ResponseWriter, r *http.Request) {
+	res := Response{
+		Success: true,
+		Message: "Welcome to Go server. Server is running...",
+	}
+
+	// b, err := json.Marshal(res)
+
+	// if err != nil {
+	// 	http.Error(w, "failed to encode response", http.StatusInternalServerError)
+	// 	return
+	// }
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(res)
+}
+
+func healthHandler(w http.ResponseWriter, r *http.Request) {
+	res := Response{
+		Success: true,
+		Message: "Server is Healthy",
+	}
+
+	// b, err := json.Marshal(res)
+
+	// if err != nil {
+	// 	http.Error(w, "failed to encode response", http.StatusInternalServerError)
+	// 	return
+	// }
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(res)
+}
+
+func createUserHandler(w http.ResponseWriter, r *http.Request) {
+	var newUser User
+
+	err := json.NewDecoder(r.Body).Decode(&newUser)
+
+	if err != nil {
+		http.Error(w, "failed to decode request body", http.StatusBadRequest)
+		return
+	}
+
+	// fmt.Println(newUser)
+
+	newUser.Id = len(users) + 1
+	users = append(users, newUser)
+
+	res := Response{
+		Success: true,
+		Message: "User created successfully",
+		Data:    newUser,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(res)
+}
+
+func getUsersHandler(w http.ResponseWriter, r *http.Request) {
+	res := Response{
+		Success: true,
+		Message: "Users fetched successfully",
+		Data:    users,
+	}
+
+	// b, err := json.Marshal(res)
+
+	// if err != nil {
+	// 	http.Error(w, "failed to encode response", http.StatusInternalServerError)
+	// 	return
+	// }
+
+	// pros: memory efficient
+	// encoder := json.NewEncoder(w)
+	// encoder.Encode(res)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(res)
+}
+
+func getUserById(w http.ResponseWriter, r *http.Request) {
+	idParam := r.PathValue("id")
+	id, err := strconv.Atoi(idParam)
+
+	if err != nil {
+		http.Error(w, "failed to convert id to int", http.StatusBadRequest)
+		return
+	}
+
+	// fmt.Printf("the value of id is: %v and type is: %T", id, id)
+
+	for _, user := range users {
+		if user.Id == id {
+			res := Response{
+				Success: true,
+				Message: "User fetched successfully",
+				Data:    user,
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(res)
+			return
+		}
+	}
+
+	res := Response{
+		Success: false,
+		Message: "User not found",
+		Data:    nil,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusNotFound)
+	json.NewEncoder(w).Encode(res)
+}
