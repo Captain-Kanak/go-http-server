@@ -106,7 +106,16 @@ func createUserHandler(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&newUser)
 
 	if err != nil {
-		http.Error(w, "failed to decode request body", http.StatusBadRequest)
+		fmt.Println(err)
+
+		res := Response{
+			Success: false,
+			Message: "Invalid request body",
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(res)
 		return
 	}
 
@@ -154,7 +163,16 @@ func getUserById(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(idParam)
 
 	if err != nil {
-		http.Error(w, "failed to convert id to int", http.StatusBadRequest)
+		fmt.Println(err)
+
+		res := Response{
+			Success: false,
+			Message: "Invalid id",
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(res)
 		return
 	}
 
