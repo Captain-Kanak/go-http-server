@@ -42,6 +42,7 @@ var users = []User{
 }
 
 func main() {
+	// Routes Handler
 	routesHandler()
 
 }
@@ -55,6 +56,7 @@ func routesHandler() {
 	mux.HandleFunc("POST /create-user", createUserHandler)
 	mux.HandleFunc("GET /users", getUsersHandler)
 	mux.HandleFunc("GET /users/{id}", getUserById)
+	mux.HandleFunc("PATCH /users/{id}", updateUserById)
 
 	fmt.Println("Server is running...")
 	err := http.ListenAndServe(":5000", mux)
@@ -184,6 +186,71 @@ func getUserById(w http.ResponseWriter, r *http.Request) {
 				Success: true,
 				Message: "User fetched successfully",
 				Data:    user,
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(res)
+			return
+		}
+	}
+
+	res := Response{
+		Success: false,
+		Message: "User not found",
+		Data:    nil,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusNotFound)
+	json.NewEncoder(w).Encode(res)
+}
+
+func updateUserById(w http.ResponseWriter, r *http.Request) {
+	idParam := r.PathValue("id")
+	id, err := strconv.Atoi(idParam)
+
+	if err != nil {
+		fmt.Println(err)
+
+		res := Response{
+			Success: false,
+			Message: "Invalid id",
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(res)
+		return
+	}
+
+	var userData User
+
+	err = json.NewDecoder(r.Body).Decode(&userData)
+
+	if err != nil {
+		fmt.Println(err)
+
+		res := Response{
+			Success: false,
+			Message: "Invalid request body",
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(res)
+		return
+	}
+
+	for idx, user := range users {
+		if user.Id == id {
+			userData.Id = user.Id
+			users[idx] = userData
+
+			res := Response{
+				Success: true,
+				Message: "User fetched successfully",
+				Data:    userData,
 			}
 
 			w.Header().Set("Content-Type", "application/json")
