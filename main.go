@@ -1,12 +1,17 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"slices"
 	"strconv"
+
+	"github.com/jackc/pgx/v5"
 )
+
+var db *pgx.Conn
 
 type Response struct {
 	Success bool   `json:"success"`
@@ -43,9 +48,29 @@ var users = []User{
 }
 
 func main() {
+	// Connect to DB
+	connectDb()
+
+	defer db.Close(context.Background())
+
 	// Routes Handler
 	server()
 
+}
+
+func connectDb() {
+	var err error
+
+	// urlExample := "postgres://username:password@localhost:5432/database_name"
+	DATABASE_URL := "postgres://postgres:postgres@localhost:5432/go_crud"
+
+	db, err = pgx.Connect(context.Background(), DATABASE_URL)
+
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("Database connected successfully!")
 }
 
 // Utils
@@ -148,8 +173,16 @@ func createUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	// fmt.Println(newUser)
 
-	newUser.Id = len(users) + 1
-	users = append(users, newUser)
+	// newUser.Id = len(users) + 1
+	// users = append(users, newUser)
+
+	query := `
+		insert into users (name, email, age)
+		values ($1, $2, $3)
+		returning id
+	`
+	db.QueryRow(context.Background(), query,
+		newUser.Name, newUser.Email, newUser.Age).Scan(&newUser.Id)
 
 	res := Response{
 		Success: true,
