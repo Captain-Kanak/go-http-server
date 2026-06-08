@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"slices"
 	"strconv"
 )
 
@@ -43,22 +44,46 @@ var users = []User{
 
 func main() {
 	// Routes Handler
-	routesHandler()
+	server()
 
 }
 
-func routesHandler() {
+// Utils
+func getId(w http.ResponseWriter, r *http.Request) (int, error) {
+	idParam := r.PathValue("id")
+	id, err := strconv.Atoi(idParam)
+
+	if err != nil {
+		fmt.Println(err)
+
+		res := Response{
+			Success: false,
+			Message: "Invalid id",
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(res)
+		return 0, err
+	}
+
+	return id, nil
+}
+
+// Server
+func server() {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /", rootHandler)
 	mux.HandleFunc("GET /health", healthHandler)
 
-	mux.HandleFunc("POST /create-user", createUserHandler)
+	mux.HandleFunc("POST /users", createUserHandler)
 	mux.HandleFunc("GET /users", getUsersHandler)
 	mux.HandleFunc("GET /users/{id}", getUserById)
 	mux.HandleFunc("PATCH /users/{id}", updateUserById)
+	mux.HandleFunc("DELETE /users/{id}", deleteUserById)
 
-	fmt.Println("Server is running...")
+	fmt.Println("Server is running on http://localhost:5000")
 	err := http.ListenAndServe(":5000", mux)
 
 	if err != nil {
@@ -161,20 +186,9 @@ func getUsersHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func getUserById(w http.ResponseWriter, r *http.Request) {
-	idParam := r.PathValue("id")
-	id, err := strconv.Atoi(idParam)
+	id, err := getId(w, r)
 
 	if err != nil {
-		fmt.Println(err)
-
-		res := Response{
-			Success: false,
-			Message: "Invalid id",
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(res)
 		return
 	}
 
@@ -207,20 +221,9 @@ func getUserById(w http.ResponseWriter, r *http.Request) {
 }
 
 func updateUserById(w http.ResponseWriter, r *http.Request) {
-	idParam := r.PathValue("id")
-	id, err := strconv.Atoi(idParam)
+	id, err := getId(w, r)
 
 	if err != nil {
-		fmt.Println(err)
-
-		res := Response{
-			Success: false,
-			Message: "Invalid id",
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(res)
 		return
 	}
 
@@ -244,13 +247,49 @@ func updateUserById(w http.ResponseWriter, r *http.Request) {
 
 	for idx, user := range users {
 		if user.Id == id {
-			userData.Id = user.Id
+			userData.Id = id
 			users[idx] = userData
 
 			res := Response{
 				Success: true,
 				Message: "User fetched successfully",
 				Data:    userData,
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(res)
+			return
+		}
+	}
+
+	res := Response{
+		Success: false,
+		Message: "User not found",
+		Data:    nil,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusNotFound)
+	json.NewEncoder(w).Encode(res)
+}
+
+func deleteUserById(w http.ResponseWriter, r *http.Request) {
+	id, err := getId(w, r)
+
+	if err != nil {
+		return
+	}
+
+	for idx, user := range users {
+		if user.Id == id {
+			// users = append(users[:idx], users[idx+1:]...)
+			users = slices.Delete(users, idx, idx+1)
+
+			res := Response{
+				Success: true,
+				Message: "User fetched successfully",
+				Data:    user,
 			}
 
 			w.Header().Set("Content-Type", "application/json")
