@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/joho/godotenv"
 )
 
 var db *pgx.Conn
@@ -48,6 +50,12 @@ type User struct {
 
 // * Main Function of the program
 func main() {
+	err := godotenv.Load()
+
+	if err != nil {
+		panic(err)
+	}
+
 	// Connect to DB
 	connectDb()
 
@@ -64,8 +72,7 @@ func main() {
 func connectDb() {
 	var err error
 
-	// urlExample := "postgres://username:password@localhost:5432/database_name"
-	DATABASE_URL := "postgres://postgres:postgres@localhost:5432/go_crud"
+	DATABASE_URL := os.Getenv("DATABASE_URL")
 
 	db, err = pgx.Connect(context.Background(), DATABASE_URL)
 
