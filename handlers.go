@@ -7,7 +7,6 @@ import (
 	"net/http"
 )
 
-// * Api Routes Handler
 func rootHandler(w http.ResponseWriter, r *http.Request) {
 	res := Response{
 		Success: true,

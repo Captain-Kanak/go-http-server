@@ -7,7 +7,6 @@ import (
 	"strconv"
 )
 
-// * Utils
 func getId(w http.ResponseWriter, r *http.Request) (int, error) {
 	idParam := r.PathValue("id")
 	id, err := strconv.Atoi(idParam)

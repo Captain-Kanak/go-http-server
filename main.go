@@ -23,7 +23,6 @@ type User struct {
 	Age   int    `json:"age"`
 }
 
-// * Main Function of the program
 func main() {
 	err := godotenv.Load()
 
@@ -31,19 +30,15 @@ func main() {
 		panic(err)
 	}
 
-	// Connect to DB
 	connectDb()
 
-	// Close DB connection at the end of the program
 	defer db.Close(context.Background())
 
-	// Start Server
 	server()
 
 	fmt.Println("Program is closed")
 }
 
-// * Server
 func server() {
 	mux := http.NewServeMux()
 

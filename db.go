@@ -8,7 +8,6 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-// * Connect to DB
 func connectDb() {
 	var err error
 
