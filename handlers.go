@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"go-http-server/db"
 	"net/http"
 )
 
@@ -72,7 +73,7 @@ func createUserHandler(w http.ResponseWriter, r *http.Request) {
 		values ($1, $2, $3)
 		returning id
 	`
-	err = db.QueryRow(context.Background(), query,
+	err = db.Db.QueryRow(context.Background(), query,
 		newUser.Name, newUser.Email, newUser.Age).Scan(&newUser.Id)
 
 	if err != nil {
@@ -118,7 +119,7 @@ func getUsersHandler(w http.ResponseWriter, r *http.Request) {
 		from users
 	`
 
-	rows, err := db.Query(context.Background(), query)
+	rows, err := db.Db.Query(context.Background(), query)
 
 	if err != nil {
 		res := Response{
@@ -200,7 +201,7 @@ func getUserById(w http.ResponseWriter, r *http.Request) {
 		where id = $1
 	`
 
-	err = db.QueryRow(context.Background(), query, id).Scan(
+	err = db.Db.QueryRow(context.Background(), query, id).Scan(
 		&user.Id, &user.Name, &user.Email, &user.Age)
 
 	if err != nil {
@@ -278,7 +279,7 @@ func updateUserById(w http.ResponseWriter, r *http.Request) {
 		returning id, name, email, age
 	`
 
-	err = db.QueryRow(context.Background(), query,
+	err = db.Db.QueryRow(context.Background(), query,
 		userData.Name, userData.Email, userData.Age, id).Scan(
 		&userData.Id, &userData.Name, &userData.Email, &userData.Age)
 
@@ -343,7 +344,7 @@ func deleteUserById(w http.ResponseWriter, r *http.Request) {
 	// err = db.QueryRow(context.Background(), query, id).Scan(
 	// 	&deletedUser.Id, &deletedUser.Name, &deletedUser.Email, &deletedUser.Age)
 
-	tag, err := db.Exec(context.Background(), query, id)
+	tag, err := db.Db.Exec(context.Background(), query, id)
 
 	if err != nil {
 		fmt.Println(err)

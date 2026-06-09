@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"go-http-server/db"
+
 	"github.com/joho/godotenv"
 )
 
@@ -13,9 +15,9 @@ func main() {
 		panic(err)
 	}
 
-	connectDb()
+	db.ConnectDb()
 
-	defer db.Close(context.Background())
+	defer db.Db.Close(context.Background())
 
 	server()
 

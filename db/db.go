@@ -1,4 +1,4 @@
-package main
+package db
 
 import (
 	"context"
@@ -8,14 +8,14 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-var db *pgx.Conn
+var Db *pgx.Conn
 
-func connectDb() {
+func ConnectDb() {
 	var err error
 
 	DATABASE_URL := os.Getenv("DATABASE_URL")
 
-	db, err = pgx.Connect(context.Background(), DATABASE_URL)
+	Db, err = pgx.Connect(context.Background(), DATABASE_URL)
 
 	if err != nil {
 		panic(err)
