@@ -445,7 +445,7 @@ func deleteUserById(w http.ResponseWriter, r *http.Request) {
 	// 	}
 	// }
 
-	var deletedUser User
+	// var deletedUser User
 
 	query := `
 		delete from users
@@ -453,12 +453,25 @@ func deleteUserById(w http.ResponseWriter, r *http.Request) {
 		returning id, name, email, age
 	`
 
-	err = db.QueryRow(context.Background(), query, id).Scan(
-		&deletedUser.Id, &deletedUser.Name, &deletedUser.Email, &deletedUser.Age)
+	// err = db.QueryRow(context.Background(), query, id).Scan(
+	// 	&deletedUser.Id, &deletedUser.Name, &deletedUser.Email, &deletedUser.Age)
+
+	tag, err := db.Exec(context.Background(), query, id)
 
 	if err != nil {
 		fmt.Println(err)
 
+		res := Response{
+			Success: false,
+			Message: "Failed to delete user",
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(res)
+	}
+
+	if tag.RowsAffected() != 1 {
 		res := Response{
 			Success: false,
 			Message: "User not found",
@@ -467,12 +480,12 @@ func deleteUserById(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusNotFound)
 		json.NewEncoder(w).Encode(res)
+		return
 	}
 
 	res := Response{
 		Success: true,
 		Message: "User deleted successfully",
-		Data:    deletedUser,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
